@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mysql-pv
+  # Note: PVs are cluster-wide and don't belong to a namespace, 
+  # but the Claim (PVC) inside your namespace will bind to it.
+spec:
+  capacity:
+    storage: 5Gi # Allocating 5 Gigabytes of storage for MySQL
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce # Storage can be mounted as read-write by a single node
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: "/mnt/data/mysql" # Directory on your local cluster node where data will stay safe
+ubuntu@ip-172-31-44-60:~/quiz$ 

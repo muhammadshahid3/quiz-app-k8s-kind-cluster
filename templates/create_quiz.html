@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Create Quiz - QuizMaster{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-7 col-lg-6">
+                <div class="card shadow-sm border-0 p-4">
+                    <h3 class="fw-bold mb-1"><i class="bi bi-plus-circle"></i> Create New Quiz</h3>
+                    <p class="text-muted small mb-4">{{ existing_count }}/{{ max_quizzes }} quizzes used</p>
+                    <form method="POST" novalidate>
+                        {{ form.hidden_tag() }}
+
+                        <div class="mb-3">
+                            {{ form.title.label(class="form-label") }}
+                            {{ form.title(class="form-control" + (" is-invalid" if form.title.errors else ""), placeholder="e.g. Python Basics Quiz") }}
+                            {% for error in form.title.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.description.label(class="form-label") }}
+                            {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else ""), rows=3, placeholder="What is this quiz about?") }}
+                            {% for error in form.description.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            {{ form.submit(class="btn btn-primary fw-semibold px-4") }}
+                            <a href="{{ url_for('main.teacher_dashboard') }}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

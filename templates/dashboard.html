@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - QuizMaster{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="p-4 rounded-4 dashboard-hero text-white mb-4">
+            <h2 class="fw-bold mb-1">Welcome, {{ current_user.fullname }} 👋</h2>
+            <p class="mb-0 opacity-75">Ready to test your skills today?</p>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-md-6">
+                <a href="{{ url_for('main.previous_results') }}" class="text-decoration-none">
+                    <div class="card action-card h-100 text-center p-4">
+                        <i class="bi bi-clock-history fs-1 text-primary mb-2"></i>
+                        <h5 class="text-dark">Previous Results</h5>
+                        <p class="text-muted small mb-0">View your quiz history</p>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-6">
+                <a href="{{ url_for('main.leaderboard') }}" class="text-decoration-none">
+                    <div class="card action-card h-100 text-center p-4">
+                        <i class="bi bi-trophy fs-1 text-primary mb-2"></i>
+                        <h5 class="text-dark">Leaderboard</h5>
+                        <p class="text-muted small mb-0">See the top scorers</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="fw-bold mb-3"><i class="bi bi-collection-play"></i> Available Quizzes</h5>
+                {% if quizzes %}
+                <div class="row g-3">
+                    {% for q in quizzes %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card h-100 border quiz-pick-card">
+                            <div class="card-body d-flex flex-column">
+                                <h6 class="fw-bold">{{ q.title }}</h6>
+                                <p class="text-muted small flex-grow-1">{{ q.description or "No description provided." }}</p>
+                                <p class="small text-muted mb-2"><i class="bi bi-person-badge"></i> {{ q.teacher.fullname }} &bull; <i class="bi bi-question-circle"></i> {{ q.question_count }} questions</p>
+                                <a href="{{ url_for('main.quiz', quiz_id=q.id) }}" class="btn btn-primary btn-sm mt-auto">
+                                    <i class="bi bi-play-fill"></i> Attempt Quiz
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                    <p class="text-muted mb-0">No quizzes are available yet. Please check back later.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h5 class="fw-bold mb-3">Recent Attempts</h5>
+                {% if results %}
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr><th>Quiz</th><th>Date</th><th>Score</th><th>Percentage</th><th>Status</th></tr>
+                        </thead>
+                        <tbody>
+                        {% for r in results %}
+                            <tr>
+                                <td>{{ r.quiz.title if r.quiz else "Deleted quiz" }}</td>
+                                <td>{{ r.submitted_at.strftime('%d %b %Y, %I:%M %p') }}</td>
+                                <td>{{ r.score }}/{{ r.total_questions }}</td>
+                                <td>{{ r.percentage }}%</td>
+                                <td>
+                                    {% if r.percentage >= 50 %}
+                                        <span class="badge bg-success">Pass</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Fail</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                    <p class="text-muted mb-0">You haven't taken any quizzes yet. Pick one above to begin!</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

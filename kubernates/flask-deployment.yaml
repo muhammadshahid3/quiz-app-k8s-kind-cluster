@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: quiz-app-web-deployment
+  namespace: quiz-app # Matches your namespace where PVC and MySQL are running
+  labels:
+    app: quiz-app-web
+spec:
+  replicas: 2 # Runs 2 copies of your Flask app for high availability and load balancing
+  selector:
+    matchLabels:
+      app: quiz-app-web
+  template:
+    metadata:
+      labels:
+        app: quiz-app-web
+    spec:
+      # 1. Init Container (Replaces Docker Compose "depends_on" with healthcheck)
+      initContainers:
+      - name: wait-for-mysql
+        image: busybox:1.36
+        command: ['sh', '-c', 'until nc -z -v -w3 mysql-service 3306; do echo "Waiting for MySQL to start..."; sleep 2; done;']
+
+      # 2. Main Flask Application Container
+      containers:
+      - name: flask-app-container
+        # WARNING: Replace with your actual Docker Hub username/image handle
+        image: shahiddevops1/quiz-app-web
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5000 # The internal port your Fla        - containerPort: 5000
+        
+        # --- ISS BLOCK KO ADD KAREIN ---
+        resources:
+          requests:
+            cpu: "100m"      # 0.1 CPU core reserved for each pod
+            memory: "128Mi"  # 128 MB RAM reserved
+          limits:
+            cpu: "500m"      # Maximum 0.5 CPU core allowed
+            memory: "256Mi"  # Maximum 256 MB RAM allowed
+        # -------------------------------
+
+
+        # Mapping all environment variables from Docker Compose
+        env:
+        # A. Fetching Plain Configuration Data from ConfigMap
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: quiz-app-config
+              key: DB_HOST
+        - name: DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: quiz-app-config
+              key: DB_PORT
+        - name: DB_USER
+          valueFrom:
+            configMapKeyRef:
+              name: quiz-app-config
+              key: DB_USER
+        - name: DB_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: quiz-app-config
+              key: DB_NAME
+        - name: QUESTIONS_PER_QUIZ
+          valueFrom:
+            configMapKeyRef:
+              name: quiz-app-config
+              key: QUESTIONS_PER_QUIZ
+        - name: PASS_PERCENTAGE
+          valueFrom:
+            configMapKeyRef:
+              name: quiz-app-config
+              key: PASS_PERCENTAGE
+
+        # B. Fetching Sensitive Data (Passwords/Keys) from Kubernetes Secrets
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: quiz-app-secrets
+              key: db-password
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: quiz-app-secrets
+              key: secret-key

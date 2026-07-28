@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: quiz-app-config
+  namespace: quiz-app
+data:
+  DB_HOST: "mysql-service"         # K8s internal service name
+  DB_PORT: "3306"
+  DB_USER: "quizuser"
+  DB_NAME: "quiz_app_db"           # Matches your compose DB
+  QUESTIONS_PER_QUIZ: "10"
+  PASS_PERCENTAGE: "50"

@@ -1,0 +1,41 @@
+  version: "3.9"
+
+  services:
+    db:
+      image: mysql:8.0
+      restart: always
+      environment:
+        MYSQL_ROOT_PASSWORD: rootpassword
+        MYSQL_DATABASE: quiz_app_db
+        MYSQL_USER: quizuser
+        MYSQL_PASSWORD: quizpassword
+      ports:
+        - "3306:3306"
+      volumes:
+        - db_data:/var/lib/mysql
+      healthcheck:
+        test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+
+    web:
+      build: .
+      restart: always
+      depends_on:
+        db:
+          condition: service_healthy
+      environment:
+        SECRET_KEY: change-this-to-a-long-random-secret-key
+        DB_HOST: db
+        DB_PORT: 3306
+        DB_USER: quizuser
+        DB_PASSWORD: quizpassword
+        DB_NAME: quiz_app_db
+        QUESTIONS_PER_QUIZ: 10
+        PASS_PERCENTAGE: 50
+      ports:
+        - "5000:5000"
+
+  volumes:
+    db_data:

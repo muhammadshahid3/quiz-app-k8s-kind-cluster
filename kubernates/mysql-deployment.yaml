@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-deployment
+  namespace: quiz-app
+  labels:
+    app: mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - name: mysql-container
+        image: mysql:8.0
+        env:
+        # 1. Root Password from Secret
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: quiz-app-secrets
+              key: mysql-root-password
+
+        # 2. Database Name from ConfigMap (Matches Flask App)
+        - name: MYSQL_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              name: quiz-app-config
+              key: DB_NAME
+
+        # 3. Database User from ConfigMap (Matches Flask App)
+        - name: MYSQL_USER
+          valueFrom:
+            configMapKeyRef:
+              name: quiz-app-config
+              key: DB_USER
+
+        # 4. User Password from Secret (Matches Flask App)
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: quiz-app-secrets
+              key: db-password
+        ports:
+        - containerPort: 3306
+          name: mysql
+        volumeMounts:
+        - name: mysql-persistent-storage
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql-persistent-storage
+        persistentVolumeClaim:
+          claimName: mysql-pvc

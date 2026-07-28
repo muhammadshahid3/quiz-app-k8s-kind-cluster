@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}{{ quiz.title }} - Manage Quiz{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-4">
+            <div>
+                <h3 class="fw-bold mb-1"><i class="bi bi-pencil-square"></i> {{ quiz.title }}</h3>
+                <p class="text-muted mb-0">{{ quiz.description or "No description provided." }}</p>
+            </div>
+            <a href="{{ url_for('main.teacher_dashboard') }}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left"></i> Back to My Quizzes
+            </a>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-5">
+                <div class="card shadow-sm border-0 p-4">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-plus-circle"></i> Add a Question</h5>
+                    <form method="POST" novalidate>
+                        {{ form.hidden_tag() }}
+
+                        <div class="mb-3">
+                            {{ form.question.label(class="form-label") }}
+                            {{ form.question(class="form-control" + (" is-invalid" if form.question.errors else ""), rows=2) }}
+                            {% for error in form.question.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                        </div>
+
+                        <div class="mb-2">
+                            {{ form.option_a.label(class="form-label") }}
+                            {{ form.option_a(class="form-control" + (" is-invalid" if form.option_a.errors else "")) }}
+                        </div>
+                        <div class="mb-2">
+                            {{ form.option_b.label(class="form-label") }}
+                            {{ form.option_b(class="form-control" + (" is-invalid" if form.option_b.errors else "")) }}
+                        </div>
+                        <div class="mb-2">
+                            {{ form.option_c.label(class="form-label") }}
+                            {{ form.option_c(class="form-control" + (" is-invalid" if form.option_c.errors else "")) }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.option_d.label(class="form-label") }}
+                            {{ form.option_d(class="form-control" + (" is-invalid" if form.option_d.errors else "")) }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.correct_answer.label(class="form-label") }}
+                            {{ form.correct_answer(class="form-select") }}
+                        </div>
+
+                        {{ form.submit(class="btn btn-primary w-100 fw-semibold") }}
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body">
+                        <h5 class="fw-bold mb-3"><i class="bi bi-list-check"></i> Questions ({{ questions|length }})</h5>
+                        {% if questions %}
+                            {% for q in questions %}
+                            <div class="p-3 mb-2 rounded border">
+                                <div class="d-flex justify-content-between align-items-start gap-2">
+                                    <p class="mb-2 fw-semibold">{{ loop.index }}. {{ q.question }}</p>
+                                    <form method="POST" action="{{ url_for('main.delete_question', quiz_id=quiz.id, question_id=q.id) }}" onsubmit="return confirm('Delete this question?');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                </div>
+                                <ul class="small text-muted mb-0 ps-3">
+                                    <li class="{{ 'text-success fw-semibold' if q.correct_answer == 'A' }}">A. {{ q.option_a }}</li>
+                                    <li class="{{ 'text-success fw-semibold' if q.correct_answer == 'B' }}">B. {{ q.option_b }}</li>
+                                    <li class="{{ 'text-success fw-semibold' if q.correct_answer == 'C' }}">C. {{ q.option_c }}</li>
+                                    <li class="{{ 'text-success fw-semibold' if q.correct_answer == 'D' }}">D. {{ q.option_d }}</li>
+                                </ul>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted mb-0">No questions yet. Add your first question using the form.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

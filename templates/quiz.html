@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Quiz - QuizMaster{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="fw-bold mb-0"><i class="bi bi-pencil-square"></i> {{ quiz.title }}</h3>
+            <span id="quiz-timer" class="badge bg-primary fs-6 py-2 px-3"><i class="bi bi-stopwatch"></i> <span id="timer-display">00:00</span></span>
+        </div>
+
+        <form method="POST" action="{{ url_for('main.submit_quiz') }}" id="quiz-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% for q in questions %}
+            <div class="card question-card mb-3 shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3">{{ loop.index }}. {{ q.question }}</h6>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="question_{{ q.id }}" id="q{{ q.id }}_a" value="A" required>
+                        <label class="form-check-label" for="q{{ q.id }}_a">{{ q.option_a }}</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="question_{{ q.id }}" id="q{{ q.id }}_b" value="B">
+                        <label class="form-check-label" for="q{{ q.id }}_b">{{ q.option_b }}</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="question_{{ q.id }}" id="q{{ q.id }}_c" value="C">
+                        <label class="form-check-label" for="q{{ q.id }}_c">{{ q.option_c }}</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="question_{{ q.id }}" id="q{{ q.id }}_d" value="D">
+                        <label class="form-check-label" for="q{{ q.id }}_d">{{ q.option_d }}</label>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+            <div class="text-center mt-4">
+                <button type="submit" class="btn btn-primary btn-lg px-5 fw-semibold">
+                    <i class="bi bi-check-circle"></i> Submit Quiz
+                </button>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/quiz.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: quiz-app-web-service
+  namespace: quiz-app # Matches your namespace
+spec:
+  selector:
+    app: quiz-app-web  # This targets your Flask application pods
+  ports:
+    - protocol: TCP
+      port: 80         # Outside network accesses via standard HTTP Port 80
+      targetPort: 5000 # Forwards that traffic to Flask internal container port 5000
+  type: LoadBalancer   # Exposes the service externally

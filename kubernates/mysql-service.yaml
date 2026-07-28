@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service    # <--- Yeh naam aapki ConfigMap ke DB_HOST se match karta hai
+  namespace: quiz-app    # Aapka active namespace
+spec:
+  selector:
+    app: mysql           # Yeh traffic ko hamare MySQL pod ki taraf route karega
+  ports:
+    - protocol: TCP
+      port: 3306         # Jis port par Flask baat karega
+      targetPort: 3306   # Jis port par MySQL container andar chal raha hai
+  type: ClusterIP        # Internal cluster IP (Safe hai, internet par expose nahi hoga)
+ubuntu@ip-172-31-44-60:~/quiz$ 

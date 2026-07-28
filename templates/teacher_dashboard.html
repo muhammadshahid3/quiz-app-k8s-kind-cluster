@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}My Quizzes - QuizMaster{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="p-4 rounded-4 dashboard-hero text-white mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <h2 class="fw-bold mb-1">Welcome, {{ current_user.fullname }} 👋</h2>
+                <p class="mb-0 opacity-75">Manage the quizzes you've created for your students.</p>
+            </div>
+            <div class="text-end">
+                <span class="badge bg-light text-dark fs-6 px-3 py-2">{{ quiz_count }}/{{ max_quizzes }} quizzes used</span>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold mb-0"><i class="bi bi-collection"></i> Your Quizzes</h5>
+            {% if quiz_count < max_quizzes %}
+                <a href="{{ url_for('main.create_quiz') }}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-plus-circle"></i> Create New Quiz
+                </a>
+            {% else %}
+                <button class="btn btn-secondary btn-sm" disabled title="Maximum of {{ max_quizzes }} quizzes reached">
+                    <i class="bi bi-plus-circle"></i> Limit Reached ({{ max_quizzes }}/{{ max_quizzes }})
+                </button>
+            {% endif %}
+        </div>
+
+        {% if quizzes %}
+        <div class="row g-3">
+            {% for q in quizzes %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body d-flex flex-column">
+                        <h6 class="fw-bold">{{ q.title }}</h6>
+                        <p class="text-muted small flex-grow-1">{{ q.description or "No description provided." }}</p>
+                        <p class="small text-muted mb-3"><i class="bi bi-question-circle"></i> {{ q.question_count }} question{{ 's' if q.question_count != 1 else '' }}</p>
+                        <div class="d-flex gap-2">
+                            <a href="{{ url_for('main.manage_quiz', quiz_id=q.id) }}" class="btn btn-outline-primary btn-sm flex-grow-1">
+                                <i class="bi bi-pencil-square"></i> Manage
+                            </a>
+                            <form method="POST" action="{{ url_for('main.delete_quiz', quiz_id=q.id) }}" onsubmit="return confirm('Delete this quiz and all its questions? This cannot be undone.');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-collection fs-1 text-muted mb-2"></i>
+                <p class="text-muted mb-3">You haven't created any quizzes yet.</p>
+                <a href="{{ url_for('main.create_quiz') }}" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Create Your First Quiz</a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
