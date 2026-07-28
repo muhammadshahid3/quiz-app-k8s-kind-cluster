@@ -1,159 +1,229 @@
-# QuizMaster — Full Stack Flask + MySQL Quiz Application
+# Kubernetes Quiz App Deployment on KIND
 
-A complete two-tier quiz application built with Flask, SQLAlchemy, MySQL,
-Bootstrap 5, and Flask-Login.
+A simple **Flask + MySQL Quiz Application** deployed on a local **Kubernetes (KIND)** cluster. This project demonstrates how to deploy a multi-container application using Kubernetes resources such as **Namespace, Persistent Volume (PV), Persistent Volume Claim (PVC), ConfigMap, Secret, Deployments, Services, and Horizontal Pod Autoscaler (HPA).**
 
 ---
 
-## 1. Project Structure
+# Project Architecture
 
-```
+<p align="center">
+  <img src="screenshot/pic1.png" width="800">
+</p>
+
+---
+
+# Features
+
+- Flask Quiz Application
+- MySQL Database
+- Kubernetes Deployment
+- Persistent Storage using PV & PVC
+- ConfigMap for application configuration
+- Secret for database credentials
+- ClusterIP Services
+- Horizontal Pod Autoscaler (HPA)
+- Local Kubernetes Cluster using KIND
+
+---
+
+# Project Structure
+
+```text
 quiz-app/
-├── app.py               # Application factory / entry point
-├── config.py             # Configuration loaded from .env
-├── database.py            # Shared SQLAlchemy() instance
-├── models.py              # User, Question, Result ORM models
-├── forms.py               # Flask-WTF signup/login forms
-├── routes.py               # All routes (Blueprint "main")
-├── requirements.txt
-├── .env                     # Environment variables
-├── Dockerfile
-├── docker-compose.yml
-├── sql/
-│   └── schema.sql            # CREATE DATABASE/TABLE + 56 seed questions
-├── static/
-│   ├── css/style.css
-│   ├── js/script.js
-│   └── js/quiz.js
-└── templates/
-    ├── base.html, index.html, signup.html, login.html,
-    ├── dashboard.html, quiz.html, result.html,
-    ├── leaderboard.html, previous_results.html, 404.html, 500.html
+│
+├── kubernetes/
+│   ├── namespace.yaml
+│   ├── mysql-pv.yaml
+│   ├── mysql-pvc.yaml
+│   ├── quiz-configmap.yaml
+│   ├── quiz-secret.yaml
+│   ├── mysql-deployment.yaml
+│   ├── mysql-service.yaml
+│   ├── flask-deployment.yaml
+│   ├── flask-service.yaml
+│   ├── flask-hpa.yaml
+│   ├── kind-config.yml
+│   └── install.sh
+│
+└── screenshots/
+    ├── pic1.png
+    └── pic2.png
 ```
 
 ---
 
-## 2. Option A — Run with Docker Compose (recommended)
+# Prerequisites
 
-Requires Docker + Docker Compose installed.
+- Docker
+- KIND
+- kubectl
+- Docker Image pushed to Docker Hub
+
+---
+
+# Step 1 - Create Namespace
+
+Create a dedicated namespace for the project.
 
 ```bash
-cd quiz-app
-docker-compose up --build
+kubectl apply -f kubernetes/namespace.yaml
 ```
-
-This starts:
-- **db** — a MySQL 8 container, auto-seeded from `sql/schema.sql`
-- **web** — the Flask app served by Gunicorn on port 5000
-
-Visit **http://localhost:5000**
-
-To stop: `docker-compose down` (add `-v` to also wipe the database volume).
 
 ---
 
-## 3. Option B — Run Locally (manual setup)
+# Step 2 - Create Persistent Volume (PV)
 
-### 3.1 Prerequisites
-- Python 3.10+
-- MySQL Server 8.0+ running locally
+Create a Persistent Volume to provide storage for MySQL.
 
-### 3.2 Create a virtual environment
 ```bash
-cd quiz-app
-python -m venv venv
-
-# Activate:
-source venv/bin/activate        # Linux / macOS
-venv\Scripts\activate           # Windows
+kubectl apply -f kubernetes/mysql-pv.yaml
 ```
 
-### 3.3 Install dependencies
+---
+
+# Step 3 - Create Persistent Volume Claim (PVC)
+
+Create a Persistent Volume Claim to request storage from the PV.
+
 ```bash
-pip install -r requirements.txt
+kubectl apply -f kubernetes/mysql-pvc.yaml
 ```
 
-### 3.4 Configure MySQL
-Log in to MySQL and create the user (or reuse root):
-```sql
-CREATE USER 'quizuser'@'localhost' IDENTIFIED BY 'quizpassword';
-GRANT ALL PRIVILEGES ON quiz_app_db.* TO 'quizuser'@'localhost';
-FLUSH PRIVILEGES;
-```
+---
 
-### 3.5 Import the database schema + seed questions
+# Step 4 - Create ConfigMap
+
+Create ConfigMap to store application configuration.
+
 ```bash
-mysql -u quizuser -p < sql/schema.sql
-```
-(This creates the database, tables, and inserts 56 sample questions.)
-
-### 3.6 Configure environment variables
-Edit `.env` to match your MySQL credentials:
-```
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=quizuser
-DB_PASSWORD=quizpassword
-DB_NAME=quiz_app_db
-SECRET_KEY=change-this-to-a-long-random-secret-key
+kubectl apply -f kubernetes/quiz-configmap.yaml
 ```
 
-### 3.7 Run the application
+---
+
+# Step 5 - Create Secret
+
+Create Secret to securely store MySQL credentials.
+
 ```bash
-python app.py
+kubectl apply -f kubernetes/quiz-secret.yaml
 ```
-Visit **http://localhost:5000**
-
-> Note: `app.py` also calls `db.create_all()` on startup as a safety net,
-> so tables will exist even if you skip step 3.5 — but you still need
-> `sql/schema.sql` to get the 56 seed questions.
 
 ---
 
-## 4. API / Route Reference
+# Step 6 - Deploy MySQL Database
 
-| Route                 | Method    | Auth Required | Description                              |
-|------------------------|-----------|----------------|-------------------------------------------|
-| `/`                     | GET       | No             | Landing page                              |
-| `/signup`               | GET/POST  | No             | Create a new account                      |
-| `/login`                | GET/POST  | No             | Log in                                    |
-| `/logout`               | GET       | Yes            | Log out and clear session                 |
-| `/dashboard`             | GET       | Yes            | User dashboard with recent attempts       |
-| `/quiz`                  | GET       | Yes            | Starts a quiz with 10 random questions    |
-| `/submit_quiz`            | POST      | Yes            | Grades submitted answers, stores Result   |
-| `/previous_results`        | GET       | Yes            | Full quiz history for the logged-in user |
-| `/leaderboard`             | GET       | Yes            | Top 10 scorers, sorted by score           |
+Deploy the MySQL database with the configured storage and environment variables.
+
+```bash
+kubectl apply -f kubernetes/mysql-deployment.yaml
+```
 
 ---
 
-## 5. Security Features Implemented
+# Step 7 - Create MySQL Service
 
-- **Password hashing** via Werkzeug (`generate_password_hash` / `check_password_hash`)
-- **Session-based auth** via Flask-Login (`login_required`, `current_user`)
-- **CSRF protection** globally enabled via Flask-WTF `CSRFProtect`
-- **SQL injection prevention** — all queries go through SQLAlchemy ORM (parameterized)
-- **Server-side input validation** via WTForms validators (`DataRequired`, `Email`, `Length`, `EqualTo`)
-- **Duplicate email check** on signup
-- **Quiz answer tamper-resistance** — question set for a quiz attempt is stored server-side in the session, not trusted from the form
+Expose the MySQL deployment internally within the Kubernetes cluster.
+
+```bash
+kubectl apply -f kubernetes/mysql-service.yaml
+```
 
 ---
 
-## 6. Architecture / Best Practices
+# Step 8 - Deploy Flask Application
 
-- **MVC-style structure**: `models.py` (Model), `templates/` (View), `routes.py` (Controller)
-- **Flask Blueprint** (`main_bp`) keeps routes modular and decoupled from `app.py`
-- **Application factory pattern** (`create_app()`) for clean initialization and testability
-- **Centralized logging** via Python's `logging` module
-- **Environment-based config** — no secrets hard-coded, loaded via `python-dotenv`
-- **Global error handlers** for 404 / 500
+Deploy the Flask Quiz Application and connect it with the MySQL database.
+
+```bash
+kubectl apply -f kubernetes/flask-deployment.yaml
+```
 
 ---
 
-## 7. Default Test Flow
+# Application Running (Before HPA)
 
-1. Sign up with a name, email, and password
-2. Log in
-3. Click **Start Quiz** → answer 10 random questions
-4. Submit → see instant score, pass/fail, percentage, and answer review
-5. Check **Leaderboard** and **Previous Results**
-# quiz-app-k8s-kind-cluster
+<p align="center">
+  <img src="screenshots/pic1.png" width="900">
+</p>
+
+---
+
+# Step 9 - Enable Horizontal Pod Autoscaler (HPA)
+
+Configure Horizontal Pod Autoscaler to automatically scale Flask pods based on CPU utilization.
+
+```bash
+kubectl apply -f kubernetes/flask-hpa.yaml
+```
+
+---
+
+# Step 10 - Create Flask Service
+
+Expose the Flask application inside the cluster.
+
+```bash
+kubectl apply -f kubernetes/flask-service.yaml
+```
+
+---
+
+# Application Running (After HPA)
+
+<p align="center">
+  <img src="screenshots/pic2.png" width="900">
+</p>
+
+---
+
+# Verify Resources
+
+```bash
+kubectl get all -n quiz-app
+```
+
+Check Persistent Volume
+
+```bash
+kubectl get pv
+```
+
+Check Persistent Volume Claim
+
+```bash
+kubectl get pvc -n quiz-app
+```
+
+Check HPA
+
+```bash
+kubectl get hpa -n quiz-app
+```
+
+---
+
+# Technologies Used
+
+- Python Flask
+- MySQL
+- Docker
+- Kubernetes
+- KIND
+- Persistent Volume (PV)
+- Persistent Volume Claim (PVC)
+- ConfigMap
+- Secret
+- Deployment
+- Service
+- Horizontal Pod Autoscaler (HPA)
+
+---
+
+# Author
+
+**Muhammad Shahid**
+
+DevOps & Cloud Enthusiast
+
+GitHub: https://github.com/your-github-username

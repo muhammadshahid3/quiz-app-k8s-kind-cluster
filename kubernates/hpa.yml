@@ -1,0 +1,19 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: quiz-app-hpa
+  namespace: quiz-app # Aapka active namespace
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: quiz-app-web-deployment # Kis cheez ko autoscale karna hai
+  minReplicas: 2                  # Traffic na ho toh kam se kam 2 pods chalein
+  maxReplicas: 10                 # Load barhne par maximum 10 pods tak jaye
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 20  
