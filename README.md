@@ -17,12 +17,13 @@ A simple **Flask + MySQL Quiz Application** deployed on a local **Kubernetes (KI
 - Flask Quiz Application
 - MySQL Database
 - Kubernetes Deployment using KIND
-- Persistent Storage with PV & PVC
-- ConfigMap for Application Configuration
-- Secret for Database Credentials
+- Persistent Volume (PV)
+- Persistent Volume Claim (PVC)
+- ConfigMap
+- Secret
 - ClusterIP Services
 - Horizontal Pod Autoscaler (HPA)
-- Metrics Server Integration
+- Metrics Server
 - Dockerized Application
 
 ---
@@ -36,13 +37,13 @@ quiz-app/
 │   ├── namespace.yaml
 │   ├── mysql-pv.yaml
 │   ├── mysql-pvc.yaml
-│   ├── quiz-configmap.yaml
-│   ├── quiz-secret.yaml
 │   ├── mysql-deployment.yaml
 │   ├── mysql-service.yaml
 │   ├── flask-deployment.yaml
 │   ├── flask-service.yaml
 │   ├── flask-hpa.yaml
+│   ├── quiz-configmap.yaml
+│   ├── quiz-secret.yaml
 │   ├── kind-config.yml
 │   └── install.sh
 │
@@ -61,8 +62,6 @@ quiz-app/
 
 # Prerequisites
 
-Install the following tools before starting.
-
 - Docker
 - kubectl
 - KIND
@@ -77,7 +76,7 @@ Install the following tools before starting.
 kind create cluster --config kubernetes/kind-config.yml
 ```
 
-Verify cluster.
+Verify the cluster.
 
 ```bash
 kubectl cluster-info
@@ -87,17 +86,21 @@ kubectl cluster-info
 
 # Step 2 - Create Namespace
 
-Create a dedicated namespace for the application.
-
 ```bash
 kubectl apply -f kubernetes/namespace.yaml
+```
+
+Verify namespace.
+
+```bash
+kubectl get namespace
 ```
 
 ---
 
 # Step 3 - Create Persistent Volume (PV)
 
-Create Persistent Volume for MySQL storage.
+Create a Persistent Volume for storing MySQL data.
 
 ```bash
 kubectl apply -f kubernetes/mysql-pv.yaml
@@ -113,7 +116,7 @@ kubectl get pv
 
 # Step 4 - Create Persistent Volume Claim (PVC)
 
-Create Persistent Volume Claim.
+Create a Persistent Volume Claim to request storage from the PV.
 
 ```bash
 kubectl apply -f kubernetes/mysql-pvc.yaml
@@ -129,7 +132,7 @@ kubectl get pvc -n quiz-app
 
 # Step 5 - Create ConfigMap
 
-Create ConfigMap for Flask application configuration.
+Store Flask application configuration.
 
 ```bash
 kubectl apply -f kubernetes/quiz-configmap.yaml
@@ -145,7 +148,7 @@ kubectl get configmap -n quiz-app
 
 # Step 6 - Create Secret
 
-Create Secret for MySQL credentials.
+Store MySQL credentials securely.
 
 ```bash
 kubectl apply -f kubernetes/quiz-secret.yaml
@@ -161,19 +164,19 @@ kubectl get secret -n quiz-app
 
 # Step 7 - Deploy MySQL Database
 
-Deploy MySQL database.
+Deploy the MySQL database with Persistent Storage.
 
 ```bash
 kubectl apply -f kubernetes/mysql-deployment.yaml
 ```
 
-Check Deployment.
+Verify Deployment.
 
 ```bash
 kubectl get deployment -n quiz-app
 ```
 
-Check Pods.
+Verify Pod.
 
 ```bash
 kubectl get pods -n quiz-app
@@ -183,7 +186,7 @@ kubectl get pods -n quiz-app
 
 # Step 8 - Create MySQL Service
 
-Expose MySQL inside the Kubernetes cluster.
+Expose MySQL inside the cluster.
 
 ```bash
 kubectl apply -f kubernetes/mysql-service.yaml
@@ -199,7 +202,7 @@ kubectl get svc -n quiz-app
 
 # Step 9 - Deploy Flask Application
 
-Deploy Flask Quiz Application.
+Deploy the Flask Quiz Application.
 
 ```bash
 kubectl apply -f kubernetes/flask-deployment.yaml
@@ -221,6 +224,8 @@ kubectl get pods -n quiz-app
 
 # Application Running (Before HPA)
 
+Before enabling the Horizontal Pod Autoscaler, the Flask application was running with the fixed number of replicas defined in the Deployment. At this stage, Kubernetes does not automatically increase or decrease the number of Pods when the application receives high traffic.
+
 <p align="center">
   <img src="screenshot/hpabefor.png" width="900">
 </p>
@@ -229,7 +234,7 @@ kubectl get pods -n quiz-app
 
 # Step 10 - Install Metrics Server (Required for HPA)
 
-Horizontal Pod Autoscaler requires Metrics Server.
+Horizontal Pod Autoscaler requires the Kubernetes Metrics Server to collect CPU metrics.
 
 ### Install Metrics Server
 
@@ -245,14 +250,14 @@ kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/late
 kubectl -n kube-system edit deployment metrics-server
 ```
 
-Inside the Deployment under **containers.args**, add:
+Add the following arguments under **containers.args**.
 
 ```yaml
 - --kubelet-insecure-tls
 - --kubelet-preferred-address-types=InternalIP,Hostname,ExternalIP
 ```
 
-Save and Exit.
+Save and exit.
 
 ---
 
@@ -266,19 +271,13 @@ kubectl rollout restart deployment metrics-server -n kube-system
 
 ### Verify Metrics Server
 
-Check Pod.
-
 ```bash
 kubectl get pods -n kube-system
 ```
 
-Check Node Metrics.
-
 ```bash
 kubectl top nodes
 ```
-
-Check Pod Metrics.
 
 ```bash
 kubectl top pods -n quiz-app
@@ -288,7 +287,7 @@ kubectl top pods -n quiz-app
 
 # Step 11 - Enable Horizontal Pod Autoscaler (HPA)
 
-Deploy Horizontal Pod Autoscaler.
+Deploy the Horizontal Pod Autoscaler.
 
 ```bash
 kubectl apply -f kubernetes/flask-hpa.yaml
@@ -300,7 +299,7 @@ Verify HPA.
 kubectl get hpa -n quiz-app
 ```
 
-Watch HPA.
+Watch HPA in real time.
 
 ```bash
 kubectl get hpa -n quiz-app -w
@@ -310,7 +309,7 @@ kubectl get hpa -n quiz-app -w
 
 # Step 12 - Create Flask Service
 
-Expose the Flask application.
+Expose the Flask application inside the Kubernetes cluster.
 
 ```bash
 kubectl apply -f kubernetes/flask-service.yaml
@@ -326,61 +325,67 @@ kubectl get svc -n quiz-app
 
 # Application Running (After HPA)
 
+After enabling the Horizontal Pod Autoscaler, CPU load was generated on the Flask application. Once the CPU utilization exceeded the configured threshold, Kubernetes automatically created additional Pods to distribute the traffic. This demonstrates automatic scaling based on application load, ensuring better performance and high availability.
+
 <p align="center">
   <img src="screenshot/afterhpa.png" width="900">
 </p>
 
+The screenshot above shows that the number of running Pods increased automatically after applying load, confirming that the Horizontal Pod Autoscaler is working successfully.
+
 ---
 
-# Verify All Kubernetes Resources
+# Verify Kubernetes Resources
+
+Get all resources.
 
 ```bash
 kubectl get all -n quiz-app
 ```
 
-Persistent Volumes
+Persistent Volumes.
 
 ```bash
 kubectl get pv
 ```
 
-Persistent Volume Claims
+Persistent Volume Claims.
 
 ```bash
 kubectl get pvc -n quiz-app
 ```
 
-ConfigMaps
+ConfigMaps.
 
 ```bash
 kubectl get configmap -n quiz-app
 ```
 
-Secrets
+Secrets.
 
 ```bash
 kubectl get secret -n quiz-app
 ```
 
-Deployments
+Deployments.
 
 ```bash
 kubectl get deployment -n quiz-app
 ```
 
-Pods
+Pods.
 
 ```bash
 kubectl get pods -n quiz-app
 ```
 
-Services
+Services.
 
 ```bash
 kubectl get svc -n quiz-app
 ```
 
-Horizontal Pod Autoscaler
+Horizontal Pod Autoscaler.
 
 ```bash
 kubectl get hpa -n quiz-app
@@ -396,14 +401,14 @@ kubectl get hpa -n quiz-app
 - Kubernetes
 - KIND
 - kubectl
-- Persistent Volume (PV)
-- Persistent Volume Claim (PVC)
 - ConfigMap
 - Secret
+- Persistent Volume (PV)
+- Persistent Volume Claim (PVC)
 - Deployment
 - Service
-- Horizontal Pod Autoscaler (HPA)
 - Metrics Server
+- Horizontal Pod Autoscaler (HPA)
 
 ---
 
@@ -413,6 +418,4 @@ kubectl get hpa -n quiz-app
 
 **DevOps & Cloud Enthusiast**
 
-GitHub: https://github.com/your-github-username
-
-LinkedIn: https://www.linkedin.com/in/your-linkedin-profile
+If you found this project helpful, don't forget to ⭐ this repository.
