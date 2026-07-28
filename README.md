@@ -7,7 +7,7 @@ A simple **Flask + MySQL Quiz Application** deployed on a local **Kubernetes (KI
 # Project Architecture
 
 <p align="center">
-  <img src="screenshot/pc1.png" width="800">
+  <img src="screenshot/arch.png" width="800">
 </p>
 
 ---
@@ -45,9 +45,7 @@ quiz-app/
 │   ├── kind-config.yml
 │   └── install.sh
 │
-└── screenshots/
-    ├── pic1.png
-    └── pic2.png
+└── 
 ```
 
 ---
@@ -171,9 +169,6 @@ kubectl apply -f kubernetes/flask-service.yaml
 
 # Application Running (After HPA)
 
-<p align="center">
-  <img src="screenshots/pic2.png" width="900">
-</p>
 
 ---
 
