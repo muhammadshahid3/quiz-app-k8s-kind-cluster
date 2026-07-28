@@ -7,7 +7,7 @@ A simple **Flask + MySQL Quiz Application** deployed on a local **Kubernetes (KI
 # Project Architecture
 
 <p align="center">
-  <img src="screenshot/pic1.png" width="800">
+  <img src="screenshot/pc1.png" width="800">
 </p>
 
 ---
