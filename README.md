@@ -227,7 +227,7 @@ kubectl get pods -n quiz-app
 Before enabling the Horizontal Pod Autoscaler, the Flask application was running with the fixed number of replicas defined in the Deployment. At this stage, Kubernetes does not automatically increase or decrease the number of Pods when the application receives high traffic.
 
 <p align="center">
-  <img src="screenshot/hpabefor.png" width="900">
+  <img src="screenshot/afterhpa.png" width="900">
 </p>
 
 ---
@@ -328,7 +328,7 @@ kubectl get svc -n quiz-app
 After enabling the Horizontal Pod Autoscaler, CPU load was generated on the Flask application. Once the CPU utilization exceeded the configured threshold, Kubernetes automatically created additional Pods to distribute the traffic. This demonstrates automatic scaling based on application load, ensuring better performance and high availability.
 
 <p align="center">
-  <img src="screenshot/afterhpa.png" width="900">
+  <img src="screenshot/hpabefor.png" width="900">
 </p>
 
 The screenshot above shows that the number of running Pods increased automatically after applying load, confirming that the Horizontal Pod Autoscaler is working successfully.
